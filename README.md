@@ -1,4 +1,4 @@
-# 🏏 Kafka IPL Demo (Official Apache Kafka + Node.js, KRaft Mode)
+# Kafka IPL (Official Apache Kafka + Node.js, KRaft Mode)
 
 End-to-end guide to run **Apache Kafka (official Docker image)** in **KRaft** and a **Node.js (KafkaJS)** demo that streams **two IPL matches in parallel** with three consumer groups (Scoreboard, Commentary, Analytics).
 
@@ -72,14 +72,15 @@ docker exec -it kafka bash -lc "/opt/kafka/bin/kafka-topics.sh --list --bootstra
 # 8) Node.js demo setup
 npm init -y
 npm i kafkajs
-# add "type": "module" to package.json
 
-# 9) Create files: admin.js, producer.js, scoreboard.js, commentary.js, analytics.js → content below
-
-# 10) Run demo
 node admin.js
 node scoreboard.js      # terminal 1
 node commentary.js      # terminal 2
 node analytics.js       # terminal 3
 node producer.js        # terminal 4
 
+Kafka producer will start streaming match events. Consumers will print them in real-time.
+![alt text](<Screenshot 2026-05-26 154444.png>)
+
+Kafka consumers will print events in real-time. Scoreboard shows scores, Commentary shows play-by-play, Analytics shows stats.
+![alt text](<Screenshot 2026-05-26 154512.png>)

@@ -1,0 +1,85 @@
+# 🏏 Kafka IPL Demo (Official Apache Kafka + Node.js, KRaft Mode)
+
+End-to-end guide to run **Apache Kafka (official Docker image)** in **KRaft** and a **Node.js (KafkaJS)** demo that streams **two IPL matches in parallel** with three consumer groups (Scoreboard, Commentary, Analytics).
+
+---
+
+- Official Kafka image (`apache/kafka:4.1.0`) in **KRaft** mode
+- Single broker acting as **controller+broker**
+- One topic `match-events` with **2 partitions** (one per match)
+- Node.js producer & three consumers using **KafkaJS**
+
+---
+
+## 🧰 Prerequisites
+
+- Docker Desktop running
+- Node.js **18+**
+- Terminal (PowerShell on Windows, bash/zsh on macOS/Linux)
+- Internet connection (to pull images)
+
+---
+
+## ⚡ TL;DR (Quick Start)
+
+```bash
+# 1) Make folder
+mkdir Kafka-demo && cd Kafka-demo
+
+# 2) Create network & volume
+docker network create kafka-net
+docker volume create kafka-data
+
+# 3) Create server.properties file
+# Windows:
+# Right click → New → Text Document
+# Rename to: server.properties
+#
+# Linux/macOS/Git Bash:
+# touch server.properties
+
+# 4) Add below content into server.properties
+
+process.roles=broker,controller
+node.id=1
+controller.quorum.voters=1@localhost:9093
+
+listeners=PLAINTEXT://:9092,CONTROLLER://:9093
+advertised.listeners=PLAINTEXT://localhost:9092
+
+inter.broker.listener.name=PLAINTEXT
+controller.listener.names=CONTROLLER
+
+listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+
+log.dirs=/var/lib/kafka/data
+
+offsets.topic.replication.factor=1
+
+# 4) Generate Cluster ID
+docker run --rm apache/kafka:4.1.0 /opt/kafka/bin/kafka-storage.sh random-uuid
+
+# 5) Format storage (replace <CLUSTER_ID> with your output)
+docker run --rm -v kafka-data:/var/lib/kafka/data -v ${PWD}/server.properties:/tmp/server.properties apache/kafka:4.1.0 /opt/kafka/bin/kafka-storage.sh format -t <CLUSTER_ID> -c /tmp/server.properties
+
+# 6) Start Kafka
+docker run -d --name kafka --network kafka-net -p 9092:9092 -v kafka-data:/var/lib/kafka/data -v ${PWD}/server.properties:/opt/kafka/config/server.properties apache/kafka:4.1.0 /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+
+# 7) Verify
+docker logs -f kafka
+docker exec -it kafka bash -lc "/opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092"
+
+# 8) Node.js demo setup
+npm init -y
+npm i kafkajs
+# add "type": "module" to package.json
+
+# 9) Create files: admin.js, producer.js, scoreboard.js, commentary.js, analytics.js → content below
+
+# 10) Run demo
+node admin.js
+node scoreboard.js      # terminal 1
+node commentary.js      # terminal 2
+node analytics.js       # terminal 3
+node producer.js        # terminal 4
+
